@@ -2,7 +2,7 @@
 
 Find what's listening on ports on your Mac, and figure out which "app" each one belongs to.
 
-`portaplotty` enumerates every TCP listener on your machine via `psutil` (the same data `lsof -iTCP -sTCP:LISTEN -nP` gives you), cross-references PIDs against `launchctl list` and `brew services list`, walks the working directory looking for project markers (`package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, ...), and presents the result either as an ASCII table in the terminal or as a dark-themed web UI.
+`portaplotty` enumerates every TCP listener on your machine via `lsof -iTCP -sTCP:LISTEN -nP`, cross-references PIDs against `launchctl list` and `brew services list`, walks the working directory looking for project markers (`package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, ...), and presents the result either as an ASCII table in the terminal or as a dark-themed web UI.
 
 It also remembers what it's seen. The first time an unrecognized dev server shows up on port 5173, you can give it a name ("vite — portaplotty FE"). Next time the same executable runs in the same directory, that name comes back.
 

@@ -5,7 +5,7 @@ Build phases for `portaplotty`. Each phase has a verifiable success criterion. D
 ## Decisions (locked)
 
 - **Language**: Python 3.11+
-- **Discovery**: `psutil.net_connections('inet')`, filter `LISTEN`. No active port scanning.
+- **Discovery**: shell out to `lsof -iTCP -sTCP:LISTEN -nP -F pcnL` and parse the `-F` machine-readable output. We tried `psutil.net_connections('inet')` first but it requires root on macOS; per-process `Process.net_connections()` works unprivileged but only sees current-user processes. `lsof` works unprivileged and sees everything we have permission to see. No active port scanning.
 - **Web**: FastAPI + uvicorn serving JSON API and static React bundle from one process
 - **CLI lib**: `rich` for the table
 - **FE**: Vite + React + TypeScript, vanilla (no router, no UI framework)
@@ -84,9 +84,9 @@ class ListeningService:
 
 **Deliverable**: `pyproject.toml`, package layout, `core/models.py`, `core/discover.py`.
 
-`discover.list_listening()` returns `list[ListeningService]` with `app` set to a placeholder. Handles `psutil.AccessDenied` gracefully → fills what it can, sets `limited_info=True`.
+`discover.list_listening()` shells out to `lsof -iTCP -sTCP:LISTEN -nP -F pcnL`, parses the field-tagged output, and enriches each row with `exe`/`cwd`/`cmdline` from `psutil.Process(pid)`. `psutil.AccessDenied` on per-process attributes sets `limited_info=True`. `app` is left as a placeholder for Phase 2.
 
-**Verify**: run `python -c "from portaplotty.core.discover import list_listening; [print(s.pid, s.port) for s in list_listening()]"` and diff PIDs against `lsof -iTCP -sTCP:LISTEN -nP | awk 'NR>1 {print $2}' | sort -u`. They match.
+**Verify**: `list_listening()` returns the same set of unique PIDs as `lsof -iTCP -sTCP:LISTEN -nP`. ✅ Verified — 22 PIDs each, zero diff.
 
 ## Phase 2 — launchd, brew, identification
 
