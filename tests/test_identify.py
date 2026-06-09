@@ -89,3 +89,27 @@ def test_fallback_includes_cmdline_hint():
     assert info.kind == "unknown"
     # The first non-flag arg after interpreter should appear
     assert "server.py" in info.name or "python" in info.name
+
+
+def test_bare_python_bundle_name_replaced_with_cwd():
+    """A .app whose Info.plist resolves to just 'Python' should display the cwd instead."""
+    svc = _svc(
+        exe="/Library/Frameworks/Python.framework/Versions/3.13/Resources/Python.app/Contents/MacOS/Python",
+        cwd="/Users/jay/projects/my-script",
+    )
+    info = identify(svc, {})
+    assert info.name == "/Users/jay/projects/my-script"
+    # Evidence trail still shows the bundle was matched first
+    sources = [e.source for e in info.evidence]
+    assert "app_bundle" in sources
+    assert "cwd_override" in sources
+
+
+def test_bare_python_without_cwd_stays_as_python():
+    """If there's no cwd to fall back to, the generic name remains."""
+    svc = _svc(
+        exe="/Library/Frameworks/Python.framework/Versions/3.13/Resources/Python.app/Contents/MacOS/Python",
+        cwd=None,
+    )
+    info = identify(svc, {})
+    assert info.name == "Python"

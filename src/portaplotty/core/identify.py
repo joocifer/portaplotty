@@ -158,6 +158,9 @@ def _fallback(svc: ListeningService) -> AppInfo:
     )
 
 
+_GENERIC_NAMES = {"Python"}
+
+
 def identify(svc: ListeningService, launchd_labels: dict[int, str]) -> AppInfo:
     """Run heuristic chain. First non-None wins. Always returns something."""
     for fn in (
@@ -167,8 +170,17 @@ def identify(svc: ListeningService, launchd_labels: dict[int, str]) -> AppInfo:
     ):
         result = fn(svc)
         if result is not None:
-            return result
-    return _fallback(svc)
+            break
+    else:
+        result = _fallback(svc)
+    # A bundle name like bare "Python" tells you nothing about what's actually
+    # running — the framework-embedded Python.app gets pulled in by any
+    # process linking libpython. Prefer the cwd, which usually identifies
+    # the script being run.
+    if result.name in _GENERIC_NAMES and svc.cwd:
+        result.name = svc.cwd
+        result.evidence.append(Evidence("cwd_override", svc.cwd))
+    return result
 
 
 _AUTHORITATIVE_KINDS = {"app_bundle", "launchd", "brew"}
