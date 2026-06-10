@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { patchApp } from "./api";
-import type { Service } from "./types";
+import { Sparkline } from "./Sparkline";
+import type { Activity, Service } from "./types";
 
 function Field({ label, value }: { label: string; value: string | null }) {
   if (!value) return null;
@@ -14,10 +15,12 @@ function Field({ label, value }: { label: string; value: string | null }) {
 
 export function DetailDrawer({
   service,
+  activity,
   onClose,
   onSaved,
 }: {
   service: Service;
+  activity?: Activity;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -48,6 +51,28 @@ export function DetailDrawer({
         </button>
         <h2>{service.app.name}</h2>
         <div className="drawer-port">:{service.port}</div>
+
+        <div className="field">
+          <div className="field-label">
+            Activity — connections (last {activity?.samples.length ?? 0} samples
+            @ 3s)
+          </div>
+          <div className="activity-panel">
+            <Sparkline
+              samples={activity?.samples ?? []}
+              width={460}
+              height={64}
+            />
+            <div className="activity-stats">
+              <span>
+                <b>{activity?.current ?? 0}</b> now
+              </span>
+              <span>
+                <b>{activity?.peak ?? 0}</b> peak
+              </span>
+            </div>
+          </div>
+        </div>
 
         <Field
           label="Bind"

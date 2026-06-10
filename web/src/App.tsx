@@ -1,20 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { fetchServices } from "./api";
+import { fetchActivity, fetchServices } from "./api";
 import { DetailDrawer } from "./DetailDrawer";
 import { ServiceCard } from "./ServiceCard";
-import type { Service } from "./types";
+import type { ActivityMap, Service } from "./types";
 
 const POLL_MS = 3000;
 
 export function App() {
   const [services, setServices] = useState<Service[]>([]);
+  const [activity, setActivity] = useState<ActivityMap>({});
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
   const [selectedPid, setSelectedPid] = useState<number | null>(null);
 
   const refresh = useCallback(async () => {
     try {
-      setServices(await fetchServices());
+      const [svcs, act] = await Promise.all([fetchServices(), fetchActivity()]);
+      setServices(svcs);
+      setActivity(act);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
@@ -75,6 +78,7 @@ export function App() {
           <ServiceCard
             key={`${s.pid}-${s.port}-${s.address}`}
             service={s}
+            activity={activity[`${s.pid}:${s.port}`]}
             onClick={() => setSelectedPid(s.pid)}
           />
         ))}
@@ -83,6 +87,7 @@ export function App() {
       {selected && (
         <DetailDrawer
           service={selected}
+          activity={activity[`${selected.pid}:${selected.port}`]}
           onClose={() => setSelectedPid(null)}
           onSaved={() => {
             refresh();

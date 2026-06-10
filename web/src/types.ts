@@ -12,6 +12,19 @@ export interface AppInfo {
   previously_seen: boolean;
 }
 
+export interface ActivitySample {
+  t: number;
+  established: number;
+}
+
+export interface Activity {
+  samples: ActivitySample[];
+  current: number;
+  peak: number;
+}
+
+export type ActivityMap = Record<string, Activity>;
+
 export interface Service {
   pid: number;
   port: number;

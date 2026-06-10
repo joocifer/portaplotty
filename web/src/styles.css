@@ -152,6 +152,61 @@ body {
   font-size: 14px;
 }
 
+.card-activity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.sparkline {
+  display: block;
+  overflow: visible;
+}
+
+.conn-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.conn-count.active { color: var(--dev); }
+
+.conn-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-faint);
+}
+.conn-count.active .conn-dot {
+  background: var(--dev);
+  box-shadow: 0 0 6px var(--dev);
+}
+
+.activity-panel {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.activity-stats {
+  display: flex;
+  gap: 18px;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 6px;
+}
+.activity-stats b {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
 .drawer-backdrop {
   position: fixed;
   inset: 0;

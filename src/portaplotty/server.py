@@ -1,19 +1,23 @@
 from __future__ import annotations
 
+import asyncio
+from contextlib import asynccontextmanager
 from dataclasses import asdict
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from .core.activity import ActivityMonitor
 from .core.discover import list_listening
 from .core.identify import identify_all
 from .core.memory import Memory
 
 _WEB_DIST = Path(__file__).parent.parent.parent / "web" / "dist"
+_SAMPLE_INTERVAL = 3.0
 
 
 class AppPatch(BaseModel):
@@ -30,13 +34,42 @@ def _snapshot() -> list[dict]:
     ]
 
 
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    monitor = ActivityMonitor()
+    app.state.monitor = monitor
+    stop = asyncio.Event()
+
+    async def loop():
+        while not stop.is_set():
+            try:
+                await asyncio.to_thread(monitor.sample)
+            except Exception:
+                pass
+            try:
+                await asyncio.wait_for(stop.wait(), timeout=_SAMPLE_INTERVAL)
+            except asyncio.TimeoutError:
+                pass
+
+    task = asyncio.create_task(loop())
+    try:
+        yield
+    finally:
+        stop.set()
+        await task
+
+
 def create_app() -> FastAPI:
-    app = FastAPI(title="portaplotty", docs_url=None, redoc_url=None)
+    app = FastAPI(title="portaplotty", docs_url=None, redoc_url=None, lifespan=_lifespan)
     memory = Memory()
 
     @app.get("/api/services")
     def get_services():
         return _snapshot()
+
+    @app.get("/api/activity")
+    def get_activity(request: Request):
+        return request.app.state.monitor.snapshot()
 
     @app.get("/api/services/{pid}")
     def get_service(pid: int):

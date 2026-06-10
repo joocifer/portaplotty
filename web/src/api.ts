@@ -1,8 +1,14 @@
-import type { Service } from "./types";
+import type { ActivityMap, Service } from "./types";
 
 export async function fetchServices(): Promise<Service[]> {
   const r = await fetch("/api/services");
   if (!r.ok) throw new Error(`/api/services: ${r.status}`);
+  return r.json();
+}
+
+export async function fetchActivity(): Promise<ActivityMap> {
+  const r = await fetch("/api/activity");
+  if (!r.ok) throw new Error(`/api/activity: ${r.status}`);
   return r.json();
 }
 
